@@ -14,9 +14,9 @@ A template repository to structure Dataflow pipelines as a monorepo. This is int
 │       ├── ...           
 │       ├── ...
 │       ├── pipeline_N.py    <- Dataflow pipeline
-│   ├── config.toml          <- Config file containing Pipelines' config
 │   ├── main.py              <- Single entry point that runs/triggers the actual pipeline
-│   ├── setup.py             <- setup.py to be used for packaging the pipelines (Refer --setup_file options)
+├── config.toml          <- Config file containing Pipelines' config
+├── setup.py                 <- setup.py to be used for packaging the pipelines (Refer --setup_file options)
 ├── devops                   <- Directory containing any devops scripts
 │   ├── scripts
 │       ├── deploy.sh           
