@@ -1,0 +1,51 @@
+name: Continous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  source-checks:
+    name: Pre-commit Checks
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # Checkout all commits, branches, tags to run -commit against diff
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Set up pre-commit cache
+        run: echo "PY=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Pre-commit checks
+        run: |
+          pip install pre-commit==2.15.0
+          pre-commit run --from-ref origin/main --to-ref HEAD
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Test with pytest
+        run: pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}/src

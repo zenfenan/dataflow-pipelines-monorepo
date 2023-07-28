@@ -1,0 +1,78 @@
+name: Deploy Dataflow Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      job_name:
+        required: true
+        type: string
+      pipeline_module_name:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+        default: europe-west1
+    secrets:
+      service_account:
+        required: true
+      workload_identity_provider:
+        required: true
+
+jobs:
+  deploy-dataflow-job:
+    name: Deploy Dataflow Job
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          # Checkout all commits, branches, tags to run -commit against diff
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          service_account: ${{ secrets.service_account }}
+          workload_identity_provider: ${{ secrets.workload_identity_provider }} # If you don't use Workload identity provider, switch to service account JSON
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Check job status
+        id: job_status
+        run: |
+          status=`gcloud dataflow jobs list --region ${{ inputs.region }} --status=active \
+            --format="table(id,name,state)" \
+            --filter="name=${{ inputs.job_name }}" | grep ${{ inputs.job_name }} | awk '{print $3}'`
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Start or Restart Job
+        shell: bash
+        run: |
+          if [ ${{ steps.job_status.outputs.status }} == 'Running' ]; then
+            python -m src.main \
+              --job_name ${{ inputs.job_name }} \
+              --pipeline_module_name ${{ inputs.pipeline_module_name }} \
+              --region ${{ inputs.region }}
+              --restart
+          else
+            python -m src.main \
+              --job_name ${{ inputs.job_name }} \
+              --pipeline_module_name ${{ inputs.pipeline_module_name }} \
+              --region ${{ inputs.region }}
+          fi
+        env:
+          PYTHONPATH: ${{ github.workspace }}

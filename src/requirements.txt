@@ -1,0 +1,2 @@
+apache-beam[gcp]==2.46.0
+tomli==2.0.0

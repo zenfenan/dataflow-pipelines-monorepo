@@ -1,0 +1,16 @@
+[defaults]
+region = "europe-west1"
+runner = "DataflowRunner"
+project = "your-gcp-project"
+temp_location = "gs://gcs-bucket/dataflow-pipelines/temp"
+service_account_email = "dataflow-worker@your-gcp-project.iam.gserviceaccount.com"
+setup_file = "./setup.py"
+requirements_file = "requirements.txt"
+
+[wordcount.job_config]
+input_subscription = "projects/your-gcp-project/subscriptions/user-activity-subscriber"
+output_format = "GCS"
+output_base_path = "gs://gcs-bucket/raw/user-activity"
+
+[wordcount.pipeline_config]
+streaming = true

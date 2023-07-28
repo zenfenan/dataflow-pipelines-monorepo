@@ -1,0 +1,22 @@
+name: Continous Deployment - wordcount
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/pipelines/wordcount.py"
+
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Dataflow Job
+    uses: ./.github/workflows/deploy-dataflow-pipeline.yml
+    with:
+      region: europe-west1
+      job_name: wordcount
+      pipeline_module_name: src.pipelines.wordcount
+    secrets:
+      service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }} # If you don't use Workload identity provider, switch to service account JSON
